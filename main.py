@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*- tab:4
 import sys
 import settings as st
 from src import settings as sst
@@ -12,15 +13,14 @@ def main(argc, argv ):
         idx = 0
         ri = utils.get_raw_input(sst.root_tip, idx)
         while ( not utils.quit_ite( ri ) ):
-            if ( ite.parse_input( ri ) ):
+            if ( ite.is_cpp( ri ) ):
                 idx += 1
+                ite.compile_run()
+            else:
+                ite.do_ite_cmd()
             ri = utils.get_raw_input( sst.root_tip, idx )
     #except Exception,e:
     except IOError,e:
         print e
-
-
-
-
 if __name__ == "__main__":
     main( len(sys.argv), sys.argv )
