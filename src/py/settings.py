@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- encoding:utf-8 -*-
+# -*- coding:utf-8 -*-
 class color:
     FG_BLAcK    = "\033[30m"    # 将字符的显示颜色改为黑色
     FG_RED      = "\033[31m"    # 将字符的显示颜色改为红色
@@ -23,3 +23,6 @@ class color:
 
 
 root_tip="{cs}CPPITE> {ce}".format( cs=color.FG_GREEN, ce=color.END )
+cpp_code_dir="./src/cpp/"
+hpp_filename="fragment.hpp"
+cpp_filename="fragment.cpp"

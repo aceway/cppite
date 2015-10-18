@@ -9,6 +9,8 @@
 #
 ########################################################
 
+import settings as st
+from cpp_fragment_tmpl import hpp_tmpl, cpp_tmpl
 
 class CppIte:
     def __init__(self):
@@ -34,4 +36,12 @@ class CppIte:
     def do_ite_cmd(self):
         """ Do the ITE command self.ite_cmd(newest inputted)"""
         print "Do c++ ITE command:{c}".format( c = self.ite_cmd )
-    
+        self.gen_cpp_code_file()
+        
+    def gen_cpp_code_file(self):
+        hpp_code= hpp_tmpl.format( includes="#include <vector>" )
+        cpp_code = cpp_tmpl.format( head_file=st.hpp_filename, tmp_cpp=self.cpp_fragment )
+        with open( st.cpp_code_dir + st.hpp_filename, 'w') as hf:
+            hf.write( hpp_code )
+        with open( st.cpp_code_dir + st.cpp_filename, 'w') as cf:
+            cf.write( cpp_code )
