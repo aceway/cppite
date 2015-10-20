@@ -1,0 +1,321 @@
+#!/usr/bin/env bash
+
+########################################################################
+#    File Name: COMPILE.sh
+# 
+#    Author: aceway
+#    Mail: aceway@qq.com
+#    Description: 自动编译当前路径所属的 项目代码 - 支持 cmake, make
+#               建议将本脚本放到 /usr/bin/下 或个人的 bin 下
+########################################################################
+
+#set -x
+set -u
+#set -e
+
+
+FG_GRAY="\033[0;37m"
+FG_RED="\033[0;31m"
+FG_GREEN="\033[0;32m"
+FG_BLUE="\033[0;34m"
+FG_YELLOW="\033[0;33m"
+FG_LIGHT_RED="\033[1;31m"
+FG_LIGHT_YELLOW="\033[1;33m"
+FG_LIGHT_GREEN="\033[1;32m"
+FG_LIGHT_BLUE="\033[0;34m"
+FG_LIGHT_GRAY="\033[1;37m"
+ 
+BG_GRAY="\e[47m"   # 将背景色设置为灰色 
+BG_BLACK="\e[40m"  # 将背景色设置为黑色
+BG_RED="\e[41m"    # 将背景色设置为红色 
+BG_GREEN="\e[42m"  # 将背景色设置为红色 
+BG_YELLOW="\e[43m" # 将背景色设置为淡红色
+BG_BLUE="\e[46m"   # 将背景色设置为淡蓝色
+BG_LIGHT_RED="\e[41m"       # 将背景色设置为红色
+BG_LIGHT_GREEN="\e[42m"     # 将背景色设置为绿色
+BG_LIGHT_BLUE="\e[44m"      # 将背景色设置为蓝色
+BG_LIGHT_PINK="\e[45m"      # 将背景色设置为紫色
+ 
+END="\033[0;00m"
+
+function check_gcc_gpp_version()
+{
+    gccv=`gcc --version | grep gcc | cut -d ' ' -f 4`
+    gppv=`g++ --version | grep g++ | cut -d ' ' -f 4`
+    if [ "${gccv}" \> "4.7" ]; then
+        gcc --version | grep gcc
+        echo -e "${FG_RED}gcc 版本过高，必须低于4.7${END}"
+        exit -1
+    fi
+    if [ "${gppv}" \> "4.7" ]; then
+        g++ --version | grep g++
+        echo -e "${FG_RED}g++ 版本过高，必须低于4.7${END}"
+        exit -1
+    fi
+}
+
+function cmake_src_code()
+{
+    cmpl_dir=`pwd`
+    subdir="./build"
+
+    force=""
+    mod_name=""
+    case $# in
+        0) :
+            force=""
+            mod_name=""
+            ;;
+        1) :
+            if [ "$1" = "force" ] || [ "$1" = "FORCE" ] || [ "$1" = "f" ] || [ "$1" = "F" ]; then
+                force="FORCE"
+                mod_name=""
+            else
+                force=""
+                mod_name=$1
+            fi
+            ;;
+        2) :
+            force=$1
+            mod_name=$2
+            ;;
+        *) :
+            force=$1
+            mod_name=$2
+            ;;
+    esac
+
+    if [ "${force}" = "FORCE" ]; then
+        echo -e "${FG_RED}RE${FG_YELLOW}COMPILE ${FG_GREEN}for cmake ${FG_RED}${mod_name}${FG_GREEN} at:${END} ${cmpl_dir}"
+        if [ -f "./build/Makefile" ]; then
+            cd ${subdir} 
+            make clean
+            cd ..
+        fi
+        rm -rf ${subdir}
+
+        if [ -d "${HOME}/.ccache" ]; then
+            rm -rf ${HOME}/.ccache/*
+        fi
+    else
+        echo -e "${FG_GREEN}COMPILE for cmake ${FG_RED}${mod_name}${FG_GREEN} at:${END} ${cmpl_dir}"
+    fi
+    mkdir -p ${subdir}
+    cd ${subdir}
+
+    cmake ${cmpl_dir} && make -j8
+    ret=$?
+    if [ ${ret} -eq 0 ]; then
+        echo -e "${FG_GREEN}COMPILE ${mod_name} FINISH${FG_RED} [OK] ${END}"
+    else
+        echo -e "${FG_YELLOW}COMPILE ${mod_name} FINISH${FG_RED} [FAILED] ${END}"
+    fi
+    return ${ret}
+}
+
+function make_src_code()
+{
+    cmpl_dir=`pwd`
+
+    force=""
+    mod_name=""
+    case $# in
+        0) :
+            force=""
+            mod_name=""
+            ;;
+        1) :
+            if [ "$1" = "force" ] || [ "$1" = "FORCE" ] || [ "$1" = "f" ] || [ "$1" = "F" ]; then
+                force="FORCE"
+                mod_name=""
+            else
+                force=""
+                mod_name=$1
+            fi
+            shift
+            ;;
+        2) :
+            force=$1
+            mod_name=$2
+            shift
+            shift
+            ;;
+        *) :
+            force=$1
+            mod_name=$2
+            shift
+            shift
+            ;;
+    esac
+
+    if [ "${force}" = "FORCE" ]; then
+        echo -e "${FG_RED}RE${FG_YELLOW}COMPILE ${FG_GREEN}for make ${FG_RED}${mod_name}${FG_GREEN} at:${END} ${cmpl_dir}"
+        make clean
+    else
+        echo -e "${FG_GREEN}COMPILE for make ${FG_RED}${mod_name}${FG_GREEN} at:${END} ${cmpl_dir}"
+    fi
+    make -j4
+    ret=$?
+    if [ ${ret} -eq 0 ]; then
+        echo -e "${FG_GREEN}COMPILE ${mod_name} FINISH${FG_RED} [OK] ${END}"
+    else
+        echo -e "${FG_YELLOW}COMPILE ${mod_name} FINISH${FG_RED} [FAILED] ${END}"
+    fi
+    return ${ret}
+}
+
+#
+#功能说明:
+#   将当前目录切换到指定目录，并在指定目录查找编译配置文件，如果失败则以递归方式将上级目录改变为当前目录进行查找, 直到遇到根目录或软连接目录
+#
+#参数说明:
+#   $1, 指定开始查找编译配置文件的目录
+#
+#返回值说明:
+#   0, 未找到配置文件
+#   1, 找到 CMakeLists.txt 配置文件
+#   2, 找到 Makefile 配置文件
+#
+#
+function find_compile_up_dir()
+{
+    if [ $# -eq 1 ] && [ -d "$1" ] && [ "$1" != "/" ] && [ ! -L "$1" ]; then  # 不支持将编译文件放在系统根目录来编译
+        local the_dir=$1
+        cd ${the_dir}
+        
+        if [ -f "./CMakeLists.txt" ]; then
+            return 1
+        elif [ -f "./Makefile" ]; then
+            return 2
+        else
+            local cmpl_dir=`dirname ${the_dir}`
+            find_compile_up_dir ${cmpl_dir}
+            return $?
+        fi
+    elif [ $# -eq 1 ] && [ -L "$1" ]; then
+        local the_dir=$1
+        #echo -e "${FG_RED}查找编译配置文件遇到目录是软连接，退出:${FG_YELLOW}${the_dir}${END}"
+        return 0 
+    elif [ $# -eq 1 ] && [ "$1" = "/" ]; then
+        local the_dir=$1
+        #echo -e "${FG_RED}该目录不是当前命令支持的源码目录:${FG_YELLOW}${the_dir}${END}"
+        return 0
+    else
+        echo -e "\n${BG_RED}参数错误:${FUNCNAME} $@ ${END}"
+        echo -e "${FG_RED}Usage:${END}\n\t${FUNCNAME} path"
+        return 0
+    fi
+}
+
+
+function try_environment_config_dir()
+{
+    if [ $# -gt 0 ] && [ ! -z ${CPPITE_PATH:-}  ] ;then 
+        if [ -d "${CPPITE_PATH}" ];then
+            local modules=$@
+            local exist_modules=""
+            for m in ${modules};do
+                if [ -d ${CPPITE_PATH}/${m} ] ;then
+                    exist_modules="${exist_modules} ${m}"
+                fi
+            done
+            if [ -z "${exist_modules}" ];then
+                echo -e "环境${FG_YELLOW}${CPPITE_PATH}${END}不存在任何一个模块:${FG_GREEN}${modules}${END}"
+            else
+                echo -e "${FG_YELLOW}请输入一个模块进行编译:${FG_GREEN}${modules}${END}:" 
+                read choose
+                if [ -d "${CPPITE_PATH}/${choose}/" ]; then
+                    cd "${CPPITE_PATH}/${choose}/"
+                    return 1
+                elif [ -d "${CPPITE_PATH}/${choose}/" ]; then
+                    cd "${CPPITE_PATH}/${choose}/"
+                    return 1
+                else
+                    echo -e "${FG_YELLOW}输入错误，配置环境${FG_RED}[${CPPITE_PATH}]${FG_YELLOW}中不存在该模块:${FG_RED}${choose}${END}" 
+                fi
+            fi
+        fi
+    fi
+    return 0
+}
+
+function dir_detector()
+{
+    if [ -d ../cppite ] && [ -d ./src/cpp/src ];then        # In cppite
+        cd ./src/cpp
+        return 1
+    elif [ -d ../../cppite ] && [ -d ../src/cpp/src ];then     # bin
+        cd ../src/cpp
+        return 1
+    elif [ -d ../../cppite ] && [ -d ./cpp/src ] && [ -d ./py ];then  # cppite/src
+        cd ./cpp
+        return 1
+    elif [ -d ../../../cppite ] && [ -d ../cpp/src/ ];then  # cppite/src/py
+        cd ../cpp
+        return 1
+    else
+        return 0;
+    fi
+    return 0
+}
+
+# scirpt entry
+start_time=`date +%s`
+MODULE_LIST="cpp ite cppite"
+
+# 检查编译器版本
+check_gcc_gpp_version
+
+# 向上递归目录查找编译配置文件,  向上搜索优先于 向下探测 和 环境配置(如果已经在模块目录下则不用去探测和环境中找)
+OLD_DIR=`pwd`
+find_compile_up_dir ${OLD_DIR}
+ret=$?
+
+#自动检测灵活支持的目录， 如trunk, branches, tags 和 build_mine 下的 模块内
+if [ ${ret} -eq 0 ];then
+    cd ${OLD_DIR}
+    dir_detector ${MODULE_LIST}
+    ret=$?
+fi
+
+# 自动检测路径失败，则尝试从环境变量中发现源码路径
+if [ ${ret} -eq 0 ];then
+    cd ${OLD_DIR}
+    try_environment_config_dir ${MODULE_LIST}
+    ret=$?
+fi
+
+DIR_NOW=`pwd`
+# 前面可能是第一次向上递归没找到，而后的向下探测， 环境配置中找到的---同时切换了目录，此处再次向上递归查找
+if [ ${ret} -gt 0 ];then
+    find_compile_up_dir ${DIR_NOW}
+    ret=$?
+fi
+
+
+#检查 svn 版本,编译人信息，更新源码里的版本信息
+# export_version_info
+
+#根据前面的查找结果编译模块
+case ${ret} in
+    0) echo -e "\n${FG_RED}当前目录是不支持的编译源码目录:${FG_YELLOW}${OLD_DIR}${END}"
+        ret=1
+        ;;
+    1) cmake_src_code $@
+        ret=$?
+        ;;
+    2) make_src_code $@
+        ret=$?
+        ;;
+    *) echo "\nfind_compile_dir 返回未知错误码:${FG_RED}${ret}${END}"
+        ret=1
+        ;;
+esac
+
+cd ${DIR_NOW}
+
+end_time=`date +%s`
+cost_time=`expr $end_time - $start_time`
+echo -e ${FG_YELLOW} "编译用时:${FG_RED}[${cost_time}]${FG_YELLOW}秒${END}\n\n"
+
+exit ${ret} 
