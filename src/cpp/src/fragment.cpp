@@ -1,10 +1,10 @@
 
 #include "fragment.hpp"
-#include <iostream>
+#include <stdio.h>
 
 void fragment_container()
 {
   // tmp code begin
-  print("hello world");
+  printf("hello world");
   // tmp code end
 }
