@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from settings import color
+import commands
 def quit_ite( input_str ):
     input_str = input_str.strip().upper()
     if input_str in ["QUIT", "EXIT", "BYE", "BYEBYE" ]:
@@ -12,19 +13,14 @@ def quit_ite( input_str ):
 def get_raw_input(tip, idx):
     return raw_input("{t} [{i}]> ".format( t=tip, i=idx) )
 
-def exec_bash_cmd():
-    if file_ext.strip().lower() in ['conf', 'xml', 'lua', 'log', 'sh', 'txt'] or pf.endswith("readme") or pf.endswith("README"):
-        cmd = "{sh} {rh} {rpt} {rph} {ru} {rps} cat {pf}".format(sh=OPS_GET_UPDATE_CONTENT_SHELL_SCRIPT, \
-            rh=ct_cfg['user_ip'], rpt=ct_cfg['user_port'], rph=ct_cfg['serv_path'], ru=ct_cfg['user_name'], rps=ct_cfg['user_passwd'], pf=pf )
-    else:                    
-        cmd = "{sh} {rh} {rpt} {rph} {ru} {rps} 'md5sum {pf} && stat {pf}'".format(sh=OPS_GET_UPDATE_CONTENT_SHELL_SCRIPT, \
-            rh=ct_cfg['user_ip'], rpt=ct_cfg['user_port'], rph=ct_cfg['serv_path'], ru=ct_cfg['user_name'], rps=ct_cfg['user_passwd'], pf=pf )
+def exec_bash_cmd(cmd):
+    the_data = {}
+    cmd = "{sh} ".format(sh=cmd)
     (status, output) = commands.getstatusoutput(cmd)
     if status == 0:          
         the_data['code'] = 0 
         the_data['data'] = output
         the_data['desc'] = "OK"
-        the_data['pfile']= prm['path_file']
     else:                    
         info = output.split(" ")
         new_info = []        
@@ -43,3 +39,4 @@ def exec_bash_cmd():
         the_data['code'] = -1
         the_data['data'] = "<br>{op}".format(op=output)
         the_data['desc'] = "{op}".format(op=output)
+    return output

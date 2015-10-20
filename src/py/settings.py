@@ -23,6 +23,7 @@ class color:
 
 
 root_tip="{cs}CPPITE> {ce}".format( cs=color.FG_GREEN, ce=color.END )
+compile_tool="./bin/COMPILE"
 cpp_code_dir="./src/cpp/"
 hpp_filename="fragment.hpp"
 cpp_filename="fragment.cpp"

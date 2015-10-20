@@ -10,6 +10,7 @@
 ########################################################
 
 import settings as st
+import utils as ut
 from cpp_fragment_tmpl import hpp_tmpl, cpp_tmpl
 
 class CppIte:
@@ -32,6 +33,7 @@ class CppIte:
     def compile_run(self):
         """ Compile the self.cpp_fragment(newest inputted) and run it"""
         print "Compile & run c++ code: {cpp}".format( cpp=self.cpp_fragment )
+        print ut.exec_bash_cmd( st.compile_tool )
 
     def do_ite_cmd(self):
         """ Do the ITE command self.ite_cmd(newest inputted)"""
