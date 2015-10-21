@@ -5,7 +5,7 @@
 # ITE command start with: #//
 # ITE command keywords:quit,exit,byebye,bye, begin, end,
 # verbose, concise, dump_project, dump_make_file, dump_cpp,
-# dump_fragment,load_fragment
+# dump_fragment,load_fragment, compile, run, edit
 #
 ########################################################
 
