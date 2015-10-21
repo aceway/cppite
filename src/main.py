@@ -14,7 +14,7 @@ def main(argc, argv ):
         while ( not utils.quit_ite( ri ) ):
             if ( ite.is_cpp( ri ) ):
                 idx += 1
-                ite.compile_run()
+                #ite.compile_run()
             else:
                 ite.do_ite_cmd()
             ri = utils.get_raw_input( sst.root_tip, idx )
