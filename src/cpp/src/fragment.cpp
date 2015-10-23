@@ -5,6 +5,9 @@
 void fragment_container()
 {
   // tmp code begin
-  std::cout << "hi~~";
+  printf("xxxxxxxxaaa");
+for(int i=0; i< 100; ++i){
+	printf("%u\t", i);
+}
   // tmp code end
 }

@@ -42,14 +42,14 @@ function check_gcc_gpp_version()
 {
     gccv=`gcc --version | grep gcc | cut -d ' ' -f 4`
     gppv=`g++ --version | grep g++ | cut -d ' ' -f 4`
-    if [ "${gccv}" \> "4.7" ]; then
+    if [ "${gccv}" \< "4.0" ]; then
         gcc --version | grep gcc
-        echo -e "${FG_RED}gcc 版本过高，必须低于4.7${END}"
+        echo -e "${FG_RED}gcc 版本过低，必须高于4.0${END}"
         exit -1
     fi
-    if [ "${gppv}" \> "4.7" ]; then
+    if [ "${gppv}" \< "4.0" ]; then
         g++ --version | grep g++
-        echo -e "${FG_RED}g++ 版本过高，必须低于4.7${END}"
+        echo -e "${FG_RED}g++ 版本过低，必须高于4.0${END}"
         exit -1
     fi
 }
