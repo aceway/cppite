@@ -5,7 +5,9 @@
 void fragment_container()
 {
   // tmp code begin
-  printf ("aaaa\n");
-printf("aaabbbbb\n\n\n");
+  for ( int x = 0; x < 100; ++x){
+ printf( "%u", x * x );
+printf("\n\n");
+}
   // tmp code end
 }

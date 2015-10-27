@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*- tab:4
+import os
 import sys
 from py import settings as sst
 from py import utils
 from py.cppite import CppIte
 
 def main(argc, argv ):
+    BASE_DIR    =  os.path.abspath( os.path.dirname(__file__) )
+    os.chdir( BASE_DIR )
     print "\t{cs}Hello c++ Interactive Test Environment world!{ce}".format( cs=sst.color.FG_BLUE, ce=sst.color.END )
     try:
         ite = CppIte()
