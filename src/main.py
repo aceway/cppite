@@ -7,7 +7,7 @@ from py import utils
 from py.cppite import CppIte
 
 def main(argc, argv ):
-    BASE_DIR    =  os.path.abspath( os.path.dirname(__file__) )
+    BASE_DIR    = os.path.dirname( os.path.abspath(os.path.dirname(__file__)) )
     os.chdir( BASE_DIR )
     print "\t{cs}Hello c++ Interactive Test Environment world!{ce}".format( cs=sst.color.FG_BLUE, ce=sst.color.END )
     try:
