@@ -9,6 +9,9 @@ hpp_tmpl="""#ifndef __FRAGMENT_HPP__
 #include <map>
 #include <list>
 
+// linux int type define; should be remore/add by system dependent in the future version.
+#include <stdint.h>  
+
 {includes}
 
 void fragment_container();
