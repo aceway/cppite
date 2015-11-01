@@ -20,8 +20,8 @@ def main(argc, argv ):
             else:
                 idx += 1
             ri = utils.get_raw_input( sst.root_tip, idx )
-    #except Exception,e:
-    except IndexError,e:
+    except Exception,e:
+    #except IndexError,e:
         print e
 if __name__ == "__main__":
     main( len(sys.argv), sys.argv )
