@@ -25,19 +25,20 @@ class CppIte:
         # command full name and its shortkeys
         self.ite_cmd_keymap={
             'RUN':      ("R", "RU"),
-            'COMPILE':  ("C", "COM", "COMP"),
+            'COMPILE':  ("C", "CO", "COM", "COMP"),
             'VERBOSE':  ("V", "VE", "VERB"),
             'SIMPLE':   ("S", "SI", "SIM"),
             'CLEAR':    ("CL", "CLE", ),
-            'HELP':     ("H", "HEL", ),
+            'SHOW':     ("SH", "SHO", ),
+            'HELP':     ("H",  "HEL", ),
             'CMD_CLEAR':     ("CCL", "CCLE", ),
             'CMD_HISTORY':   ("CH", "CHIS", ),
-            'ADD_INCLUDE_FILE':("AIF", ),
-            'RM_INCLUDE_FILE': ("RIF", "REMOVE_INCLUDE_FILE"),
-            'ADD_INCLUDE_DIR': ("AID", ),
-            'RM_INCLUDE_DIR':  ("RID", "REMOVE_INCLUDE_DIR"),
-            'LIST_INCLUDE_FILE':("AIF", ),
-            'LIST_INCLUDE_DIR': ("AIF", ),
+            'ADD_INCLUDE_FILE': ("AIF", ),
+            'RM_INCLUDE_FILE':  ("RIF", "REMOVE_INCLUDE_FILE"),
+            'ADD_INCLUDE_DIR':  ("AID", ),
+            'RM_INCLUDE_DIR':   ("RID", "REMOVE_INCLUDE_DIR"),
+            'LIST_INCLUDE_FILE':("LIF", ),
+            'LIST_INCLUDE_DIR': ("LID", ),
         }
         
 
@@ -96,12 +97,14 @@ class CppIte:
                     .format(c=st.color.FG_GREEN, e=st.color.END)
             cmds = [ c for c in dir(self) if c.startswith("cmd_") ]
             for c in cmds:
-                print "{c}: {s}\n".format( c=c[4:], s=getattr(self, c).__doc__)
+                sc = ",".join( self.ite_cmd_keymap[ c[4:].upper() ] )
+                print "{c}: {s}. Short command:{sc}\n".format( c=c[4:], s=getattr(self, c).__doc__, sc=sc)
         else:
             name = name.lower()
             cmd_name = "cmd_{n}".format( n= name )
             if hasattr(self, cmd_name):
-                print "{n}: {s}".format( n=name, s= getattr(self, cmd_name).__doc__)
+                sc = ",".join( self.ite_cmd_keymap[ name.upper() ] )
+                print "{n}: {s}. Short command:{sc}".format( n=name, s= getattr(self, cmd_name).__doc__, sc=sc)
             else:
                 print "{c}Not surpported command:{n}{e}".format( n=name, c=st.color.FG_RED, e=st.color.END )
                 
@@ -125,6 +128,13 @@ class CppIte:
     def cmd_simple(self):
         """Run in simple mode, only print the result but no process info."""
         self.is_verbose = False
+
+
+    def cmd_show(self):
+        """Show the inputted c++ code that cached in cppite temp memory"""
+        if self.is_verbose: print "{c}Show the cached c++ code:{e}".format( c=st.color.FG_GREEN, e=st.color.END )
+        for c in self.cpp_fragment:
+            print c
 
 
     def cmd_clear(self):
@@ -154,39 +164,68 @@ class CppIte:
 
     def cmd_list_include_file(self):
         """List c++ include header files"""
-        print "waiting to impleted files"
+        print "Now c++ include header file:"
+        if len(self.include_files)==0: print "None"
+        for hf in self.include_files:
+            print hf
 
 
     def cmd_list_include_dir(self):
         """List c++ include header dirs"""
-        print "waiting to impleted dirs"
+        print "Now c++ include header dir:"
+        if len(self.include_dirs)==0: print "None"
+        for hd in self.include_dirs:
+            print hd
 
                   
-    def cmd_add_include_file(self, file_list=None):
+    def cmd_add_include_file(self, *file_list):
         """Add c++ include header files"""
-        print "waiting to impleted files"
+        if len(file_list) == 0: 
+            print "Need header file name!"
+        for f in file_list:
+            if f in self.include_files:
+                pass
+            else:
+                self.include_files.append(f)
 
 
-    def cmd_add_include_dir(self, dir_list=None):
+    def cmd_add_include_dir(self, *dir_list):
         """Add c++ include header dirs"""
-        print "waiting to impleted dirs"
+        if len(dir_list) == 0: 
+            print "Need dir name!"
+        for d in dir_list:
+            if d in self.include_dirs:
+                pass
+            else:
+                self.include_dirs.append(d)
 
 
-    def cmd_rm_include_file(self, file_list=None):
+    def cmd_rm_include_file(self, *file_list):
         """Remove c++ include header files"""
-        print "waiting to impleted files"
+        for f in file_list:
+            if f in self.include_files:
+                self.include_files.remove(f)
+            else:
+                pass
 
 
-    def cmd_rm_include_dir(self, dir_list=None):
+    def cmd_rm_include_dir(self, *dir_list):
         """Remove c++ include header dirs"""
-        print "waiting to impleted dirs"
+        for d in dir_list:
+            if d in self.include_dirs:
+                self.include_dirs.remove(d)
+            else:
+                pass
 
         
     def gen_cpp_code_file(self):
         """Use the input c++ code fragment(cached in the list) to generate c++ hpp/cpp file."""
         if self.is_verbose:
             print "Generating c++ code... {f}".format( f = st.cpp_code_dir )
-        hpp_code= hpp_tmpl.format( includes="#include <algorithm>" )
+        includes="#include <algorithm>\n"
+        for f in self.include_files:
+            includes += "#include <{f}>\n".format( f=f )
+        hpp_code= hpp_tmpl.format( includes=includes )
         cpp_code = cpp_tmpl.format( head_file=st.hpp_filename, tmp_cpp= "\n".join(self.cpp_fragment) )
         with open( st.cpp_code_dir + st.hpp_filename, 'w') as hf:
             hf.write( hpp_code )
