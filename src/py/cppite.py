@@ -18,7 +18,27 @@ class CppIte:
     def __init__(self):
         self.cpp_fragment = []
         self.ite_cmd = []
+        self.include_files = []
+        self.include_dirs = []
         self.is_verbose=False
+
+        # command full name and its shortkeys
+        self.ite_cmd_keymap={
+            'RUN':      ("R", "RU"),
+            'COMPILE':  ("C", "COM", "COMP"),
+            'VERBOSE':  ("V", "VE", "VERB"),
+            'SIMPLE':   ("S", "SI", "SIM"),
+            'CLEAR':    ("CL", "CLE", ),
+            'HELP':     ("H", "HEL", ),
+            'CMD_CLEAR':     ("CCL", "CCLE", ),
+            'CMD_HISTORY':   ("CH", "CHIS", ),
+            'ADD_INCLUDE_FILE':("AIF", ),
+            'RM_INCLUDE_FILE': ("RIF", "REMOVE_INCLUDE_FILE"),
+            'ADD_INCLUDE_DIR': ("AID", ),
+            'RM_INCLUDE_DIR':  ("RID", "REMOVE_INCLUDE_DIR"),
+            'LIST_INCLUDE_FILE':("AIF", ),
+            'LIST_INCLUDE_DIR': ("AIF", ),
+        }
         
 
     def is_ite_cmd(self, ri):
@@ -35,22 +55,21 @@ class CppIte:
 
     def do_ite_cmd(self):
         """ Do the ITE command """
-        if self.is_verbose:
-            print "Do c++ ITE command:{c}".format( c = self.ite_cmd[-1] )
-
-        if self.ite_cmd[-1] in ["R", "RU", "RUN"]:
-            st, out = self._do_cmd( "compile" )
-            if st == 0: self._do_cmd( "run" )
-        elif self.ite_cmd[-1] in ["C", "COM", "COMP", "COMPILE" ]:
-            self._do_cmd( "compile" )
-        elif self.ite_cmd[-1] in ["V", "VE", "VER", "VERBOSE"]:
-            self._do_cmd( 'verbose', (True, ) )
-        elif self.ite_cmd[-1] in ["S", "SI", "SIM", 'SIMPLE']:
-            self._do_cmd( 'verbose', (False,) )
-        elif self.ite_cmd[-1] in ["CL", "CLE", "CLEAR" ]:
-            self._do_cmd( 'clear' )
+        cmd = self.ite_cmd[-1].strip().split(" ")
+        ite_cmd=cmd[0].lower()
+        args=cmd[1:]
+        if cmd[0] in self.ite_cmd_keymap:
+            ite_cmd=cmd[0].lower()
+            args=cmd[1:]
         else:
-            self._do_cmd( self.ite_cmd[-1] )
+            for k, v in self.ite_cmd_keymap.items():
+                if cmd[0] in v:
+                    ite_cmd=k.lower()
+                    args=cmd[1:]
+                    break
+        if self.is_verbose:
+            print "Do c++ ITE command:{c} {a}".format( c = ite_cmd, a=args )
+        self._do_cmd( ite_cmd.lower(), args )
 
 
     def _do_cmd( self, cmd, *args, **keywords ):
@@ -59,21 +78,63 @@ class CppIte:
         """
         if hasattr( self, "cmd_" + cmd.strip().lower() ) and callable( getattr(self, "cmd_" + cmd.strip().lower() ) ):
             func = getattr(self, "cmd_" + cmd.strip().lower() )
-            return apply( func, *args, **keywords )
+            try:
+                ret = apply( func, *args, **keywords )
+            except Exception, e:
+                print "{e}".format( e = e )
+                ret = None
+            return ret
         else:
-            print "{c}Not surpport cmd:{cmd}.{e}".format( c=st.color.FG_RED, cmd=cmd, e=st.color.END )
+            print "{c}Not surpported command:{cmd}{e}".format( c=st.color.FG_RED, cmd=cmd, e=st.color.END )
             return None
 
-    def cmd_verbose(self, verbose):
-        self.is_verbose = True if verbose is True else False
+
+    def cmd_help(self, name=None):
+        """Print the cppite command help info."""
+        if name  is None:
+            print "{c}cppite command start with '#//' in the console line, here is all the supported commands:{e}"\
+                    .format(c=st.color.FG_GREEN, e=st.color.END)
+            cmds = [ c for c in dir(self) if c.startswith("cmd_") ]
+            for c in cmds:
+                print "{c}: {s}\n".format( c=c[4:], s=getattr(self, c).__doc__)
+        else:
+            name = name.lower()
+            cmd_name = "cmd_{n}".format( n= name )
+            if hasattr(self, cmd_name):
+                print "{n}: {s}".format( n=name, s= getattr(self, cmd_name).__doc__)
+            else:
+                print "{c}Not surpported command:{n}{e}".format( n=name, c=st.color.FG_RED, e=st.color.END )
+                
+
+    def cmd_cmd_history(self):
+        """Show cppite commands history that you inputted before."""
+        for cmd in self.ite_cmd[:-1]:
+            print "{c}".format( c = cmd.strip() )
+
+
+    def cmd_cmd_clear(self):
+        """Clear cppite cached commands"""
+        self.ite_cmd = []
+
+
+    def cmd_verbose(self):
+        """Run in verbose mode, print process detail info."""
+        self.is_verbose = True
+
+
+    def cmd_simple(self):
+        """Run in simple mode, only print the result but no process info."""
+        self.is_verbose = False
+
 
     def cmd_clear(self):
+        """Clear the inputted c++ code that cached in cppite temp memory"""
         if self.is_verbose: print "{c}Clear the cached c++ code:\n{cd}\n{e}".format( c=st.color.FG_YELLOW, cd="\n".join(self.cpp_fragment), e=st.color.END )
         self.cpp_fragment = []
 
 
     def cmd_compile(self):
-        """Generate the c++ code fragment.hpp/cpp files and compile them."""
+        """Compile the c++ code in cppite caching memory."""
         if self.is_verbose:
             print "Compile c++ code: {cpp}".format( cpp="\n".join(self.cpp_fragment) )
         self.gen_cpp_code_file()
@@ -81,7 +142,7 @@ class CppIte:
 
 
     def cmd_run(self):
-        """ Compile the self.cpp_fragment(newest inputted) and run it"""
+        """Compile the inputted c++ code and run it"""
         if self.is_verbose:
             print "Run c++ code fragment: {cpp}".format( cpp="\n".join(self.cpp_fragment) )
         if os.path.isfile( st.out_bin_exe ):
@@ -89,6 +150,36 @@ class CppIte:
             if status == 0: print output
         else:
             print "{c}Cannot find and gen {bf}!{e}".format( c=st.color.FG_RED, bf=st.out_bin_exe, e=st.color.END )
+            
+
+    def cmd_list_include_file(self):
+        """List c++ include header files"""
+        print "waiting to impleted files"
+
+
+    def cmd_list_include_dir(self):
+        """List c++ include header dirs"""
+        print "waiting to impleted dirs"
+
+                  
+    def cmd_add_include_file(self, file_list=None):
+        """Add c++ include header files"""
+        print "waiting to impleted files"
+
+
+    def cmd_add_include_dir(self, dir_list=None):
+        """Add c++ include header dirs"""
+        print "waiting to impleted dirs"
+
+
+    def cmd_rm_include_file(self, file_list=None):
+        """Remove c++ include header files"""
+        print "waiting to impleted files"
+
+
+    def cmd_rm_include_dir(self, dir_list=None):
+        """Remove c++ include header dirs"""
+        print "waiting to impleted dirs"
 
         
     def gen_cpp_code_file(self):

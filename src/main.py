@@ -9,7 +9,7 @@ from py.cppite import CppIte
 def main(argc, argv ):
     BASE_DIR    = os.path.dirname( os.path.abspath(os.path.dirname(__file__)) )
     os.chdir( BASE_DIR )
-    print "\t{cs}Hello c++ Interactive Test Environment world!{ce}".format( cs=sst.color.FG_BLUE, ce=sst.color.END )
+    print "\t{cs}Hello world! c++ Interactive Test Environment{ce}".format( cs=sst.color.FG_BLUE, ce=sst.color.END )
     try:
         ite = CppIte()
         idx = 0

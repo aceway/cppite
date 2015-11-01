@@ -28,3 +28,9 @@ out_bin_exe="./bin/cppitehost"
 cpp_code_dir="./src/cpp/src/"
 hpp_filename="fragment.hpp"
 cpp_filename="fragment.cpp"
+
+default_include_headers=[
+]
+
+default_include_dirs=[
+]
