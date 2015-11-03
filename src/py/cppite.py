@@ -47,7 +47,7 @@ class CppIte:
         or its c++ code fragment.
         """
         if ri.strip().startswith( "#//" ):
-            self.ite_cmd.append( ri.strip().strip("#//").upper() )
+            self.ite_cmd.append( ri.strip().strip("#//") )
             return True
         else:
             self.cpp_fragment.append( ri )
@@ -57,15 +57,15 @@ class CppIte:
     def do_ite_cmd(self):
         """ Do the ITE command """
         cmd = self.ite_cmd[-1].strip().split(" ")
-        ite_cmd=cmd[0].lower()
+        ite_cmd=cmd[0].upper()
         args=cmd[1:]
-        if cmd[0] in self.ite_cmd_keymap:
-            ite_cmd=cmd[0].lower()
+        if ite_cmd in self.ite_cmd_keymap:
+            ite_cmd=cmd[0].upper()
             args=cmd[1:]
         else:
             for k, v in self.ite_cmd_keymap.items():
-                if cmd[0] in v:
-                    ite_cmd=k.lower()
+                if ite_cmd in v:
+                    ite_cmd=k.upper()
                     args=cmd[1:]
                     break
         if self.is_verbose:
