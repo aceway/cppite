@@ -13,13 +13,15 @@ import commands
 import settings as st
 import utils as ut
 from cpp_fragment_tmpl import hpp_tmpl, cpp_tmpl
+from CMakeLists_tmpl import cmakelists_tmpl
 
 class CppIte:
     def __init__(self):
-        self.cpp_fragment = []
+        self.cpp_fragment  = []
         self.ite_cmd = []
         self.include_files = []
-        self.include_dirs = []
+        self.include_dirs  = []
+        self.static_files  = []
         self.is_verbose=False
 
         # command full name and its shortkeys
@@ -39,6 +41,9 @@ class CppIte:
             'RM_INCLUDE_DIR':   ("RID", "REMOVE_INCLUDE_DIR"),
             'LIST_INCLUDE_FILE':("LIF", ),
             'LIST_INCLUDE_DIR': ("LID", ),
+            'ADD_STATIC_FILE':  ('ASF', ),
+            'LIST_STATIC_FILE': ('LSF', ),
+            'RM_STATIC_FILE':   ('RSF', "REMOVE_STATIC_FILE"),
         }
         
 
@@ -77,7 +82,8 @@ class CppIte:
         """
         Private command proxy, execute by command name rule."
         """
-        if hasattr( self, "cmd_" + cmd.strip().lower() ) and callable( getattr(self, "cmd_" + cmd.strip().lower() ) ):
+        if hasattr( self, "cmd_" + cmd.strip().lower() ) \
+        and callable( getattr(self, "cmd_" + cmd.strip().lower() ) ):
             func = getattr(self, "cmd_" + cmd.strip().lower() )
             try:
                 ret = apply( func, *args, **keywords )
@@ -132,14 +138,17 @@ class CppIte:
 
     def cmd_show(self):
         """Show the inputted c++ code that cached in cppite temp memory"""
-        if self.is_verbose: print "{c}Show the cached c++ code:{e}".format( c=st.color.FG_GREEN, e=st.color.END )
+        if self.is_verbose:
+            print "{c}Show the cached c++ code:{e}".format( c=st.color.FG_GREEN, e=st.color.END )
         for c in self.cpp_fragment:
             print c
 
 
     def cmd_clear(self):
         """Clear the inputted c++ code that cached in cppite temp memory"""
-        if self.is_verbose: print "{c}Clear the cached c++ code:\n{cd}\n{e}".format( c=st.color.FG_YELLOW, cd="\n".join(self.cpp_fragment), e=st.color.END )
+        if self.is_verbose:
+            print "{c}Clear the cached c++ code:\n{cd}\n{e}". \
+                format( c=st.color.FG_YELLOW, cd="\n".join(self.cpp_fragment), e=st.color.END )
         self.cpp_fragment = []
 
 
@@ -148,6 +157,7 @@ class CppIte:
         if self.is_verbose:
             print "Compile c++ code: {cpp}".format( cpp="\n".join(self.cpp_fragment) )
         self.gen_cpp_code_file()
+        self.gen_cmakelist_file()
         return self.exec_bash_cmd( st.compile_tool )
 
 
@@ -165,7 +175,8 @@ class CppIte:
     def cmd_list_include_file(self):
         """List c++ include header files"""
         print "Now c++ include header file:"
-        if len(self.include_files)==0: print "None"
+        for hf in st.default_include_headers:
+            print hf
         for hf in self.include_files:
             print hf
 
@@ -173,9 +184,19 @@ class CppIte:
     def cmd_list_include_dir(self):
         """List c++ include header dirs"""
         print "Now c++ include header dir:"
-        if len(self.include_dirs)==0: print "None"
+        for hd in st.default_include_dirs:
+            print hd
         for hd in self.include_dirs:
             print hd
+
+
+    def cmd_list_static_file(self):
+        """List cmake link static file"""
+        print "Now cmake link static files:"
+        for sf in st.default_static_files:
+            print sf
+        for sf in self.static_files:
+            print sf
 
                   
     def cmd_add_include_file(self, *file_list):
@@ -183,10 +204,10 @@ class CppIte:
         if len(file_list) == 0: 
             print "Need header file name!"
         for f in file_list:
-            if f in self.include_files:
+            if f.strip() in self.include_files:
                 pass
             else:
-                self.include_files.append(f)
+                self.include_files.append( f.strip() )
 
 
     def cmd_add_include_dir(self, *dir_list):
@@ -194,17 +215,26 @@ class CppIte:
         if len(dir_list) == 0: 
             print "Need dir name!"
         for d in dir_list:
-            if d in self.include_dirs:
+            if d.strip() in self.include_dirs:
                 pass
             else:
-                self.include_dirs.append(d)
+                self.include_dirs.append( d.strip() )
+
+
+    def cmd_add_static_file(self, *file_list):
+        """Add static file"""
+        for f in file_list:
+            if f.strip() in self.static_files:
+                pass
+            else:
+                self.static_files.append( f.strip() )
 
 
     def cmd_rm_include_file(self, *file_list):
         """Remove c++ include header files"""
         for f in file_list:
-            if f in self.include_files:
-                self.include_files.remove(f)
+            if f.strip() in self.include_files:
+                self.include_files.remove( f.strip() )
             else:
                 pass
 
@@ -212,25 +242,64 @@ class CppIte:
     def cmd_rm_include_dir(self, *dir_list):
         """Remove c++ include header dirs"""
         for d in dir_list:
-            if d in self.include_dirs:
-                self.include_dirs.remove(d)
+            if d.strip() in self.include_dirs:
+                self.include_dirs.remove( d.strip() )
             else:
                 pass
+
+
+    def cmd_rm_static_file(self, *file_list):
+        """Remove static file from cache"""
+        for f in file_list:
+            if f.strip() in self.static_files:
+                self.static_files.remove( f.strip() )
+            else:
+                pass
+             
 
         
     def gen_cpp_code_file(self):
         """Use the input c++ code fragment(cached in the list) to generate c++ hpp/cpp file."""
         if self.is_verbose:
             print "Generating c++ code... {f}".format( f = st.cpp_code_dir )
-        includes="#include <algorithm>\n"
+        includes=""
+        for f in st.default_include_headers:
+            if f.find('.') < 0 or f.endswith('.h') or f.endswith('.hpp'):
+                the_include = "#include <{f}>\n".format( f=f )
+                if includes.find( the_include ) < 0:
+                    includes += the_include
         for f in self.include_files:
-            includes += "#include <{f}>\n".format( f=f )
+            if f.find('.') < 0 or f.endswith('.h') or f.endswith('.hpp'):
+                the_include = "#include <{f}>\n".format( f=f )
+                if includes.find( the_include ) < 0:
+                    includes += the_include
+                
         hpp_code= hpp_tmpl.format( includes=includes )
         cpp_code = cpp_tmpl.format( head_file=st.hpp_filename, tmp_cpp= "\n".join(self.cpp_fragment) )
         with open( st.cpp_code_dir + st.hpp_filename, 'w') as hf:
             hf.write( hpp_code )
         with open( st.cpp_code_dir + st.cpp_filename, 'w') as cf:
             cf.write( cpp_code )
+            
+
+    def gen_cmakelist_file(self):
+        """Use the input and default config data to generate cmake's CMakeLists.txt"""
+        include_dirs = ""
+        for ind in st.default_include_dirs:
+            include_dirs += "{d}\n".format( d = ind )
+        for ind in self.include_dirs:
+            include_dirs += "{d}\n".format( d = ind )
+
+        static_files = ""
+        for sf in st.default_static_files:
+            static_files += "{s}\n".format( s = sf )
+        for sf in self.static_files:
+            static_files += "{s}\n".format( s = sf )
+
+        cmake_tmpl=cmakelists_tmpl.format( add_include_dirs=include_dirs, add_static_libs=static_files )
+        with open( st.cmakelists_dir + st.cmakelists_filename, 'w') as cmf:
+            cmf.write( cmake_tmpl )
+    
 
 
     def exec_bash_cmd(self, cmd):
