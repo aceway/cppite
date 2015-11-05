@@ -41,7 +41,7 @@ default_include_headers=[
 ]
 
 default_include_dirs=[
-    "/usr/local/include/"
+    "/usr/local/include/",
 ]
 
 default_static_files=[

@@ -33,6 +33,7 @@ class CppIte:
             'CLEAR':    ("CL", "CLE", ),
             'SHOW':     ("SH", "SHO", ),
             'HELP':     ("H",  "HEL", ),
+            'RELOAD_SETTING': ('RS', 'REST'),
             'CMD_CLEAR':     ("CCL", "CCLE", ),
             'CMD_HISTORY':   ("CH", "CHIS", ),
             'ADD_INCLUDE_FILE': ("AIF", ),
@@ -44,6 +45,8 @@ class CppIte:
             'ADD_STATIC_FILE':  ('ASF', ),
             'LIST_STATIC_FILE': ('LSF', ),
             'RM_STATIC_FILE':   ('RSF', "REMOVE_STATIC_FILE"),
+            'LOAD_FRAG_FILE':   ('LFF', 'LDFF'),
+
         }
         
 
@@ -113,6 +116,12 @@ class CppIte:
                 print "{n}: {s}. Short command:{sc}".format( n=name, s= getattr(self, cmd_name).__doc__, sc=sc)
             else:
                 print "{c}Not surpported command:{n}{e}".format( n=name, c=st.color.FG_RED, e=st.color.END )
+
+
+    def cmd_reload_setting(self):
+        """Reload the settings.py"""
+        reload( st )
+    
                 
 
     def cmd_cmd_history(self):
@@ -176,27 +185,27 @@ class CppIte:
         """List c++ include header files"""
         print "Now c++ include header file:"
         for hf in st.default_include_headers:
-            print hf
+            print "\t", hf
         for hf in self.include_files:
-            print hf
+            print "\t", hf
 
 
     def cmd_list_include_dir(self):
         """List c++ include header dirs"""
         print "Now c++ include header dir:"
         for hd in st.default_include_dirs:
-            print hd
+            print "\t", hd
         for hd in self.include_dirs:
-            print hd
+            print "\t", hd
 
 
     def cmd_list_static_file(self):
         """List cmake link static file"""
         print "Now cmake link static files:"
         for sf in st.default_static_files:
-            print sf
+            print "\t", sf
         for sf in self.static_files:
-            print sf
+            print "\t", sf
 
                   
     def cmd_add_include_file(self, *file_list):
@@ -255,7 +264,20 @@ class CppIte:
                 self.static_files.remove( f.strip() )
             else:
                 pass
-             
+
+
+    def cmd_load_frag_file(self, *the_file):
+        """Load frag code from a file"""
+        if len(the_file) == 1:
+            if os.path.isfile( the_file[0] ):
+                with open(the_file[0], 'r') as rf:
+                    for line in rf:
+                        self.cpp_fragment.append( line );
+            else:
+                print "{c}It's not valid file:{f}.{e}".format( c = st.color.FG_RED, e = st.color.END, f=the_file[0] )
+            pass
+        else:
+            print "{c}Only one file once, but now({ln}):{tf}{e}".format( c = st.color.FG_RED, e = st.color.END, ln=len(the_file), tf=the_file )
 
         
     def gen_cpp_code_file(self):
