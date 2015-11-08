@@ -22,9 +22,30 @@ class color:
 
 
 
-root_tip="{cs}CPPITE> {ce}".format( cs=color.FG_GREEN, ce=color.END )
+root_tip="{cs}CPPITE {ce}".format( cs=color.FG_GREEN, ce=color.END )
 compile_tool="./bin/COMPILE"
 out_bin_exe="./bin/cppitehost"
+
 cpp_code_dir="./src/cpp/src/"
 hpp_filename="fragment.hpp"
 cpp_filename="fragment.cpp"
+
+cmakelists_dir="./src/cpp/"
+cmakelists_filename="CMakeLists.txt"
+
+default_include_headers=[
+    "vector",
+    "map",
+    "list",
+    "algorithm"
+]
+
+default_include_dirs=[
+    "/usr/local/include/",
+]
+
+default_static_files=[
+]
+
+default_static_dirs=[
+]
