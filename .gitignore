@@ -1,6 +1,7 @@
 fragment.hpp
 fragment.cpp
 cppitehost
+CMakeLists.txt
 
 # Byte-compiled / optimized / DLL files
 .DS_Store
