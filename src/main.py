@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*- tab:4
 import os
 import sys
+import readline
 from py import settings as sst
 from py import utils
 from py.cppite import CppIte
@@ -11,6 +12,8 @@ def main(argc, argv ):
     os.chdir( BASE_DIR )
     print "\t{cs}Hello world! c++ Interactive Test Environment{ce}".format( cs=sst.color.FG_BLUE, ce=sst.color.END )
     try:
+        readline.parse_and_bind("tab: complete")
+        readline.parse_and_bind("set editing-mode emacs")
         ite = CppIte()
         cmd_idx = 0
         code_idx = 0
