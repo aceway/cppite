@@ -264,7 +264,7 @@ start_time=`date +%s`
 MODULE_LIST="cpp ite cppite"
 
 # 检查编译器版本
-check_gcc_gpp_version
+# check_gcc_gpp_version
 
 # 向上递归目录查找编译配置文件,  向上搜索优先于 向下探测 和 环境配置(如果已经在模块目录下则不用去探测和环境中找)
 OLD_DIR=`pwd`
