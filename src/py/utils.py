@@ -11,4 +11,11 @@ def quit_ite( input_str ):
         return False
 
 def get_raw_input(tip, idx):
-    return raw_input("{t} [{i}]> ".format( t=tip, i=idx) )
+    return raw_input( "{t} [{i}]> ".format( t=tip, i=idx ) )
+
+def completer(text, state):
+    options = [i for i in commands if i.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None

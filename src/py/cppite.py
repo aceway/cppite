@@ -48,6 +48,9 @@ class CppIte:
             'LOAD_FRAG_FILE':   ('LFF', 'LDFF'),
 
         }
+        self.commands = self.ite_cmd_keymap.keys()
+        self.short_cmds = []
+        [ self.short_cmds.extend(list(c)) for c in self.ite_cmd_keymap.values() if isinstance(c, (list,tuple)) and len(c)>0 ]
         
 
     def is_ite_cmd(self, ri):
@@ -358,3 +361,28 @@ class CppIte:
         elif self.is_verbose:
             print "{c}{out}{e}".format( c=st.color.FG_GREEN, out=output, e=st.color.END )
         return status, output
+
+    def completer(self, text, state):
+        if text.strip().startswith("#//"):
+            tmp_text = text.strip().strip("#//")
+            commands = self.commands #+ self.short_cmds
+            commands.sort()
+            options = [ "#//{c}".format(c=c) for c in commands if c.startswith( tmp_text.upper() )]
+            if state < len(options):
+                return options[state]
+            else:
+                return None
+        elif text.strip().startswith("#") or text.strip().startswith("#/"):
+            options = ["#//" ]
+            if state < len(options):
+                return options[state]
+            else:
+                return None
+        else:
+            tmp_text = text.strip().lower()
+            codes = self.cpp_fragment
+            options = [ c for c in codes if c.startswith ( tmp_text ) ]
+            if state < len(options):
+                return options[state]
+            else:
+                return None
