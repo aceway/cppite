@@ -7,11 +7,8 @@ SET(CMAKE_MODULE_PATH ${{CMAKE_MODULE_PATH}} "${{CMAKE_SOURCE_DIR}}/cmake/")
 SET(EXECUTABLE_OUTPUT_PATH ${{CMAKE_SOURCE_DIR}}/../../bin/ )
 SET(CMAKE_USE_RELATIVE_PATHS  true )
  
-FIND_PACKAGE(glib REQUIRED)
- 
 INCLUDE_DIRECTORIES( 
     "/usr/include/"
-    ${{GLIB_INCLUDE_DIR}}
     {add_include_dirs}
 )
  
@@ -23,7 +20,6 @@ SET (SRC_LIST
 )
  
 SET(EXTRA_LIBS 
-    glib-2.0
     ${{EXTRA_LIBS}}
     {add_static_libs}
 )
