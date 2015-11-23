@@ -378,6 +378,12 @@ class CppIte:
                 return options[state]
             else:
                 return None
+        elif len(text.strip()) == 0:
+            options = ["#"]
+            if state < len(options):
+                return options[state]
+            else:
+                return None
         else:
             tmp_text = text.strip().lower()
             codes = self.cpp_fragment
