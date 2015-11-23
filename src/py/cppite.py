@@ -26,13 +26,16 @@ class CppIte:
 
         # command full name and its shortkeys
         self.ite_cmd_keymap={
+            'HELP':     ("H",  "HEL", ),
+            'QUIT':     ("Q", ),
+            'EXIT':     ("E", ),
+            'BYE':      ("B", ),            
             'RUN':      ("R", "RU"),
             'COMPILE':  ("C", "CO", "COM", "COMP"),
             'VERBOSE':  ("V", "VE", "VERB"),
             'SIMPLE':   ("S", "SI", "SIM"),
             'CLEAR':    ("CL", "CLE", ),
             'SHOW':     ("SH", "SHO", ),
-            'HELP':     ("H",  "HEL", ),
             'RELOAD_SETTING': ('RS', 'REST'),
             'CMD_CLEAR':     ("CCL", "CCLE", ),
             'CMD_HISTORY':   ("CH", "CHIS", ),
@@ -46,7 +49,6 @@ class CppIte:
             'LIST_STATIC_FILE': ('LSF', ),
             'RM_STATIC_FILE':   ('RSF', "REMOVE_STATIC_FILE"),
             'LOAD_FRAG_FILE':   ('LFF', 'LDFF'),
-
         }
         self.commands = self.ite_cmd_keymap.keys()
         self.short_cmds = []
@@ -119,6 +121,19 @@ class CppIte:
                 print "{n}: {s}. Short command:{sc}".format( n=name, s= getattr(self, cmd_name).__doc__, sc=sc)
             else:
                 print "{c}Not surpported command:{n}{e}".format( n=name, c=st.color.FG_RED, e=st.color.END )
+
+                
+    def cmd_quit(self):
+        """Exit cppite"""
+        exit(0)
+        
+    def cmd_exit(self):
+        """Alias of  quit"""
+        self.cmd_quit()
+        
+    def cmd_bye(self):
+        """Alias of quit"""
+        self.cmd_quit()
 
 
     def cmd_reload_setting(self):
